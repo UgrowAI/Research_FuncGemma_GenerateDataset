@@ -1,0 +1,7 @@
+New_Made/
+.env
+*.csv
+*.arrow
+*.json
+__pycache__/
+google/
