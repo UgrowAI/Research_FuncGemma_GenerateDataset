@@ -38,6 +38,7 @@ if __name__ == "__main__":
     if(not validation[0]):
         raise Exception(f"Original generated dataset is not valid. {generate_data_file_path} \n Invalid data records: {validation[1]}")
 
+    final_dataset_directory = GENERATED_DIR / "Ali/mobile-actions"
     # complete the generated dataset (by adding metadata and developer role)
     try:
         generated_data_file_name = "gpt_generated_with_15_tools_2026_03_19.csv"
@@ -47,7 +48,14 @@ if __name__ == "__main__":
 
         complete_generated_data_file_name = "(complete)_gpt_generated_with_15_tools_2026_03_19.csv"
         complete_data_file_path = GENERATED_DIR / complete_generated_data_file_name
-        completeDataset(generated_data_file_path, train_portion, complete_data_file_path, tools)
+
+        json_path_directory = final_dataset_directory
+        if (not (write_dir_path := Path(json_path_directory)).is_dir()):
+            write_dir_path.mkdir(parents=True, exist_ok=True)
+
+        json_path = json_path_directory / "dataset.jsonl"
+
+        completeDataset(generated_data_file_path, train_portion, complete_data_file_path, json_path, tools)
         print("Main: Dataset completed and stored.")
     except Exception as e:
         print(f"Main: There is an error in completting the dataset: {e}")
@@ -56,7 +64,7 @@ if __name__ == "__main__":
 
     # to convert csv to .arrow and store
     try:
-        final_dataset_directory = GENERATED_DIR / "Ali/mobile-actions"
+
         if (not (write_dir_path := Path(final_dataset_directory)).is_dir()):
             write_dir_path.mkdir(parents=True, exist_ok=True)
 
@@ -71,8 +79,10 @@ if __name__ == "__main__":
     dataset_dir = GENERATED_DIR / "Ali/mobile-actions"
     readme_path = PROJECT_DIR / "MobileActions" / "README.md"
 
+    commit_message = ""
+
     try:
-        UploadDataset2HuggingFace(str(dataset_dir), env_path, str(readme_path))
+        UploadDataset2HuggingFace(str(dataset_dir), env_path, str(readme_path), commit_message)
         print("Main: uploaded to hugging face")
     except Exception as e:
         print(f"Main: There is an error in uploading the dataset to the hugging face: {e}")

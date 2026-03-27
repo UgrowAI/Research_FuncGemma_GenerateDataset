@@ -2,6 +2,7 @@
 To make a complete version of Dataset, usually in csv, to Hugging Face datasets.Dataset object – a format that the model
 , here Function Gemma, can ingest.
 """
+import os
 from pathlib import Path
 import pandas as pd
 from datasets import Dataset
@@ -21,8 +22,7 @@ def acceptable_format(complete_dataset_path:str, write_directory:str):
             user = input("Destination directory is not empty. Do you want to clean and generate new .arrow file it? Yes/N")
             if(user == "Yes"):
                 for file in Path(write_directory).iterdir():
-                    file.rmdir()
-
+                    os.remove(file)
                 break
             elif(user == "N"):
                 convert = False
@@ -35,6 +35,7 @@ def acceptable_format(complete_dataset_path:str, write_directory:str):
         # convert it to .arrow file in a separate directory
         dataset = Dataset.from_pandas(df)
         dataset.save_to_disk(write_directory)
+        # dataset.to_json(Path(write_directory)/"dataset.jsonl")
 
         # check
         if(any(Path(write_directory).iterdir())):

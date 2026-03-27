@@ -3,5 +3,6 @@ New_Made/
 *.csv
 *.arrow
 *.json
+*.jsonl
 __pycache__/
 google/

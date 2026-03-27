@@ -1,3 +1,16 @@
+---
+license: cc-by-4.0
+name: Mobile Action
+tags:
+- function-calling
+- mobile-actions
+- functiongemma
+formats:
+- json
+Languages:
+- English
+---
+
 ## Mobile Action
 Mobile Actions is the dataset designed to fine-tune function calling models such as FunctionGemma 270M over mobile functionalities.
 The dataset contains conversational traces over current 15 Android OS system capabilities.

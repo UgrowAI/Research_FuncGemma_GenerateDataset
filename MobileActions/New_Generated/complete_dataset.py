@@ -6,6 +6,7 @@ import random
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import json
+import datasets
 
 import pandas as pd
 from pathlib import Path
@@ -37,6 +38,7 @@ def loadMessageDataGen(generate_data_file_path):
     print(f"messages_column len: {len(messages_column)}")
     print(f"messages_column[0] example: {messages_column[0]}")
     print(f"messages_column[0] type: {type(messages_column[0])}")
+    # print(f"messages_column[0] type: {type(json.loads(messages_column[0]))}")
     print("************************************************")
 
     for message in messages_column:
@@ -48,7 +50,7 @@ def loadMessageDataGen(generate_data_file_path):
 
 
 
-def completeDataset(generated_data_file_path, train_portion, complete_data_file_path, tools):
+def completeDataset(generated_data_file_path, train_portion, complete_data_file_path, json_path, tools):
     complete_message_list = []
     # complementary part
     dev_message = [
@@ -63,27 +65,55 @@ def completeDataset(generated_data_file_path, train_portion, complete_data_file_
     train_size_check = 0
     for message in loadMessageDataGen(generated_data_file_path):
         assert isinstance(message, list), f"message loaded from the dataset supposed to be a list, but is {type(message)}"
+        # dataset_row_dict = {"metadata": metadata[0 if random.random() < train_portion else 1], "tools": f"{tools}"}
         dataset_row_dict = {"metadata": metadata[0 if random.random() < train_portion else 1], "tools": tools}
 
         # enrich message
         message_new = []
-        message_new.append(dev_message)
-        message_new.append(message)
+        message_new += dev_message
+        message_new += message
 
         # add message to dataset_row_dict
+        # dataset_row_dict.update({"messages": f"{message_new}"})
         dataset_row_dict.update({"messages": message_new})
 
         if(dataset_row_dict["metadata"] == "train"):
             train_size_check += 1
 
-        # append to complete_message_list
-        complete_message_list.append(json.dumps(dataset_row_dict))
+        # append string of dict format to complete_message_list
+        # complete_message_list.append(json.dumps(dataset_row_dict))
 
-    # create DataFrame
-    complete_message_df = pd.DataFrame({"text": complete_message_list})
+        # append dict format to complete_message_list
+        complete_message_list.append(dataset_row_dict)
+
+
+
+
+    # create DataFrame with text column
+    # complete_message_df = pd.DataFrame({"text": complete_message_list})
+
+    # create DataFrame with dict keys as its column
+    complete_message_df = pd.DataFrame(complete_message_list)
 
     # store the completed version
     complete_message_df.to_csv(complete_data_file_path)
+
+    # complete_message_df.to_json(json_path)
+    # dataset = datasets.Dataset.from_pandas(complete_message_df)
+    # datasets.Dataset.from_dict()
+    # dataset.to_json(json_path)
+    # print(f"dataset: {dataset} stored as jsonl.")
+
+    # You need make dataset directly from list of dicts in order to create json file needed to be fed to the model in the fine-tuning.
+    dataset = datasets.Dataset.from_list(complete_message_list)
+    print("dataset created from the list of dicts.")
+    dataset.to_json(json_path)
+    print(f"dataset stored in {json_path}.")
+
+    # with open(json_path, "w") as json_file:
+    #     json.dump(complete_message_list, json_file)
+
+    print("Done!")
 
 
 if __name__=="__main__":
@@ -107,4 +137,10 @@ if __name__=="__main__":
 
     complete_generated_data_file_name = "(complete)_gpt_generated_with_15_tools_2026_03_19.csv"
     complete_data_file_path = GENERATED_DIR / complete_generated_data_file_name
-    completeDataset(generated_data_file_path, train_portion, complete_data_file_path, tools)
+
+    json_path_directory = GENERATED_DIR / "Ali/mobile-actions"
+    if (not (write_dir_path := Path(json_path_directory)).is_dir()):
+        write_dir_path.mkdir(parents=True, exist_ok=True)
+    json_path = json_path_directory / "dataset.jsonl"
+
+    completeDataset(generated_data_file_path, train_portion, complete_data_file_path, json_path, tools)
