@@ -19,9 +19,39 @@ import sys
 weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 developer_content = f"""You are a model that can do function calling with the following functions. 
-    Current date and time given in YYYY-MM-DDTHH:MM:SS format: {datetime.now(ZoneInfo("America/Toronto")).strftime('%Y-%m-%dT%H:%M:%S %Z')}.
-    Day of week is {weekdays[datetime.now().weekday()]}.
+    Current date and time given in YYYY-MM-DDTHH:MM:SS format: {datetime.now(ZoneInfo("America/Toronto")).strftime('%Y-%m-%dT%H:%M:%S %Z')}\n.
+    Day of week is {weekdays[datetime.now().weekday()]}\n.
     """
+
+
+
+def touch_dataset(dataset):
+    # touch on the original data
+    message = f"{'*' * 40}\n{'*' * 40}\nTouch on the original data\n"
+    print(message)
+    sample_num = 10
+    for i in range(sample_num):
+        sample = dataset[i]
+        print(f"sample: {sample}")
+        # template_iputs = json.loads(sample['text'])
+        # print(f"template_iputs: {template_iputs}")
+
+
+    #     # checks
+    #     assert isinstance(template_iputs, dict), f"Error: template_iputs type: {type(template_iputs)}"
+    #     assert "messages" in template_iputs, f"messages is not in template_iputs: {template_iputs.keys()}"
+    #     assert "tools" in template_iputs, f"tools is not in template_iputs: {template_iputs.keys()}"
+    #
+    #
+    #     messages = template_iputs["messages"]
+    #     tools = template_iputs["tools"]
+    #     message += f"{'=' * 40}\nMessages: \n{messages}\n"
+    #     message += f"{'-' * 40}\nTools:\n{tools}\n{'=' * 40}\n"
+    #
+    # message += f"{'*' * 40}\n{'*' * 40}\n"
+
+    # print(message)
+
 
 def get_dataset(csv_file_path):
     df = pd.read_csv(csv_file_path)
@@ -60,6 +90,7 @@ def completeDataset(generated_data_file_path, train_portion, complete_data_file_
         }
     ]
     metadata = ["train", "eval"]
+    complete_message_list_dataset = [] # to be used in dataset.Dataset.from_list()
 
     # read each row of the messages in the generated dataset
     train_size_check = 0
@@ -67,6 +98,7 @@ def completeDataset(generated_data_file_path, train_portion, complete_data_file_
         assert isinstance(message, list), f"message loaded from the dataset supposed to be a list, but is {type(message)}"
         # dataset_row_dict = {"metadata": metadata[0 if random.random() < train_portion else 1], "tools": f"{tools}"}
         dataset_row_dict = {"metadata": metadata[0 if random.random() < train_portion else 1], "tools": tools}
+        dataset_row_dict_dataset = {"metadata": metadata[0 if random.random() < train_portion else 1], "tools": str(tools)}
 
         # enrich message
         message_new = []
@@ -76,6 +108,7 @@ def completeDataset(generated_data_file_path, train_portion, complete_data_file_
         # add message to dataset_row_dict
         # dataset_row_dict.update({"messages": f"{message_new}"})
         dataset_row_dict.update({"messages": message_new})
+        dataset_row_dict_dataset.update({"messages": str(message_new)})
 
         if(dataset_row_dict["metadata"] == "train"):
             train_size_check += 1
@@ -85,10 +118,13 @@ def completeDataset(generated_data_file_path, train_portion, complete_data_file_
 
         # append dict format to complete_message_list
         complete_message_list.append(dataset_row_dict)
+        complete_message_list_dataset.append(dataset_row_dict_dataset)
 
 
 
-
+    # print
+    print(f"A few samples from complete_message_list: \n{complete_message_list[2]}\n{'-'*40}")
+    print(f"A few samples from complete_message_list_dataset: \n{complete_message_list_dataset[2]}\n{'-'*40}")
     # create DataFrame with text column
     # complete_message_df = pd.DataFrame({"text": complete_message_list})
 
@@ -105,8 +141,11 @@ def completeDataset(generated_data_file_path, train_portion, complete_data_file_
     # print(f"dataset: {dataset} stored as jsonl.")
 
     # You need make dataset directly from list of dicts in order to create json file needed to be fed to the model in the fine-tuning.
-    dataset = datasets.Dataset.from_list(complete_message_list)
+    dataset = datasets.Dataset.from_list(complete_message_list_dataset)
     print("dataset created from the list of dicts.")
+    # print(dataset)
+    touch_dataset(dataset)
+    print("Now convert it to json.")
     dataset.to_json(json_path)
     print(f"dataset stored in {json_path}.")
 

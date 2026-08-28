@@ -1,101 +1,14 @@
-from MobileActions.ingest_model import acceptable_format
-from MobileActions.New_Generated.validate_generated_dataset import Validate
-from MobileActions.New_Generated.complete_dataset import completeDataset
-from publish import UploadDataset2HuggingFace
-from pathlib import Path
-import sys
 
-PROJECT_DIR = Path(".").absolute()
-
-MOBILEACTIONS_DIR = PROJECT_DIR / "MobileActions"
-print(f"MOBILEACTIONS_DIR: {MOBILEACTIONS_DIR}")
-
-GENERATED_DIR = MOBILEACTIONS_DIR / "New_Generated"
-print(f"GENERATED_DIR: {GENERATED_DIR}")
+# Generate Dataset
+This script is aiming to work on a generated raw dataset and put it in a complete dataset shape needed to feed the FunctionGemma models.
 
 
 
-FUNCTION_DIR = MOBILEACTIONS_DIR / "Functions"
-print(f"FUNCTION_DIR: {FUNCTION_DIR}")
+## How the original dataset made:
+Prompt used to generate new dataset:
 
 
-if __name__ == "__main__":
-    sys.path.append(str(FUNCTION_DIR))
-    from plyer_mobile_functions import tools
-
-    validated = False
-    try:
-        generate_data_file_name = "gpt_generated_with_15_tools_2026_03_19.csv"
-        generate_data_file_path = GENERATED_DIR / generate_data_file_name
-
-        # validate
-        validation = Validate(tools).validate_dataset(generate_data_file_path)
-        print("Main: \N{HEAVY CHECK MARK} Validation done!")
-    except Exception as e:
-        print(f"Main: \u2718 Validation failed: {e}")
-        raise e
-
-    if(not validation[0]):
-        raise Exception(f"Original generated dataset is not valid. {generate_data_file_path} \n Invalid data records: {validation[1]}")
-
-    final_dataset_directory = GENERATED_DIR / "Ali/mobile-actions"
-    # complete the generated dataset (by adding metadata and developer role)
-    try:
-        generated_data_file_name = "gpt_generated_with_15_tools_2026_03_19.csv"
-        generated_data_file_path = GENERATED_DIR / generated_data_file_name
-
-        train_portion = 0.9
-
-        complete_generated_data_file_name = "(complete)_gpt_generated_with_15_tools_2026_03_19.csv"
-        complete_data_file_path = GENERATED_DIR / complete_generated_data_file_name
-
-        json_path_directory = final_dataset_directory
-        if (not (write_dir_path := Path(json_path_directory)).is_dir()):
-            write_dir_path.mkdir(parents=True, exist_ok=True)
-
-        json_path = json_path_directory / "dataset.jsonl"
-
-        completeDataset(generated_data_file_path, train_portion, complete_data_file_path, json_path, tools)
-        print("Main: Dataset completed and stored.")
-    except Exception as e:
-        print(f"Main: There is an error in completting the dataset: {e}")
-        raise e
-
-
-    # to convert csv to .arrow and store
-    try:
-
-        if (not (write_dir_path := Path(final_dataset_directory)).is_dir()):
-            write_dir_path.mkdir(parents=True, exist_ok=True)
-
-        acceptable_format(str(complete_data_file_path), str(final_dataset_directory))
-        print(f"Main: Dataset converted to .arrow and stored in {final_dataset_directory}")
-    except Exception as e:
-        print(f"Main: There is an error in converting the dataset to .arrow and store it: {e}")
-        raise e
-
-    # upload dataset to hugging face
-    env_path = PROJECT_DIR / ".env"
-    dataset_dir = GENERATED_DIR / "Ali/mobile-actions"
-    readme_path = PROJECT_DIR / "MobileActions" / "README.md"
-
-    commit_message = ""
-
-    try:
-        UploadDataset2HuggingFace(str(dataset_dir), env_path, str(readme_path), commit_message)
-        print("Main: uploaded to hugging face")
-    except Exception as e:
-        print(f"Main: There is an error in uploading the dataset to the hugging face: {e}")
-
-
-
-
-
-
-# Prompt used to generate new dataset:
-
-
-"""
+```description
 Given tools list, I want you to generate user prompt samples with right answer (assistant role). Right answer should provide right function calls in right order along with its required parameters. An example to this request could be:
 
 Example:
@@ -125,5 +38,77 @@ Functions: {"function": {"name": "FUNCTION_NAME", "arguments": {KWARGS}}}
 
 tool list: 
 [{'function': {'name': 'list_application', 'description': 'To list the applications installed on this android platform.', 'parameters': {'type': 'OBJECT', 'properties': {}, 'required': []}}}, {'function': {'name': 'open_application', 'description': 'To list the applications installed on this android platform.', 'parameters': {'type': 'OBJECT', 'properties': {'application_name': {'type': 'STRING', 'description': 'Name of the application to be opened.'}}, 'required': ['application_name']}}}, {'function': {'name': 'set_brightness', 'description': 'To set a specific level to the current brightness.', 'parameters': {'type': 'OBJECT', 'properties': {'level': {'type': 'STRING', 'description': 'The brightness level in the range of 0 to 100.'}}, 'required': ['level']}}}, {'function': {'name': 'decrease_brightness', 'description': 'To level down the current brightness.', 'parameters': {'type': 'OBJECT', 'properties': {}, 'required': []}}}, {'function': {'name': 'increase_brightness', 'description': 'To level up the current brightness.', 'parameters': {'type': 'OBJECT', 'properties': {}, 'required': []}}}, {'function': {'name': 'get_current_brightness', 'description': 'To get the current level of brightness.', 'parameters': {'type': 'OBJECT', 'properties': {}, 'required': []}}}, {'function': {'name': 'send_email', 'description': 'Sends an email.', 'parameters': {'type': 'OBJECT', 'properties': {'to': {'type': 'STRING', 'description': 'The recipient email address.'}, 'subject': {'type': 'STRING', 'description': 'The email subject.'}, 'body': {'type': 'STRING', 'description': 'The email body.'}, 'create_chooser': {'type': 'BOOLEAN', 'description': 'Whether to display a program chooser to handle the message.'}}, 'required': ['to', 'subject']}}}, {'function': {'name': 'battery_status', 'description': 'Provides information about the battery of your device.', 'parameters': {'type': 'OBJECT', 'properties': {}, 'required': []}}}, {'function': {'name': 'bluetooth_status', 'description': 'To get the bluetooth status info.', 'parameters': {'type': 'OBJECT', 'properties': {}, 'required': []}}}, {'function': {'name': 'phone_call', 'description': 'Make a call with number or open phone dial.', 'parameters': {'type': 'OBJECT', 'properties': {'number': {'type': 'STRING', 'description': 'The number to which we want to call.'}, 'dial_call': {'type': 'BOOLEAN', 'description': 'True if you want to dial call via phone, and False if you want to call the number directly.'}}, 'required': ['number', 'dial_call']}}}, {'function': {'name': 'phone_sms', 'description': 'Send a sms message.', 'parameters': {'type': 'OBJECT', 'properties': {'sms_recipient': {'type': 'STRING', 'description': 'The recipient number.'}, 'sms_message': {'type': 'STRING', 'description': 'The message body.'}}, 'required': ['sms_recipient']}}}, {'function': {'name': 'take_picture', 'description': 'To take a picture using camera.', 'parameters': {'type': 'OBJECT', 'properties': {}, 'required': []}}}, {'function': {'name': 'take_screenshot', 'description': 'To capture a digital image of what is currently visible on the monitor.', 'parameters': {'type': 'OBJECT', 'properties': {}, 'required': []}}}, {'function': {'name': 'turnOff_light', 'description': 'Turn off the light.', 'parameters': {'type': 'OBJECT', 'properties': {}, 'required': []}}}, {'function': {'name': 'turnOn_light', 'description': 'Turn on the light.', 'parameters': {'type': 'OBJECT', 'properties': {}, 'required': []}}}]
+'''
+``` 
 
-"""
+
+The raw dataset contains messages with user and assistant roles. First, it needs to be validated such that assure us it contains valid function names and corresponding parameters (using MobileActions/New_Generated/validate_generated_dataset.py).
+Then each record which currently contains messages with user and assistant roles to get the following columns (using MobileActions/New_Generated/complete_dataset.py):
+```commandline
+| -------------- | ---------- | ---------------- |
+|    metadata    |    tools   |     messages     |
+| -------------- | ---------- | ---------------- |
+| train OR valid | tools list | roles: developer,|
+|                |            | user, assistant  |
+| -------------- | ---------- | ---------------- |
+
+```
+
+## Upload to HuggingFace 
+publish.py will upload the dataset along with README.md within MobileAction folder.
+
+## To Combine New Dataset With the Old One
+merge_dataset.py within MobileActions/Merge is responsible to merge the new version with the old one.
+
+
+
+
+## Mobile Action
+Mobile Actions is the dataset designed to fine-tune function calling models such as FunctionGemma 270M over mobile functionalities.
+The dataset contains conversational traces over current 15 Android OS system capabilities.
+Fine-tuned model is able to execute on-device's functions with the following provided tools:
+```list
+- Turning the flashlight on
+- Turning the flashlight off
+- Send email
+- Check battery status
+- Check bluetooth status
+- Make a phone call
+- Send sms message
+- Take a picture,
+- Take a screenshot
+- Get current_brightness
+- Decrease brightness
+- Increase brightness
+- Set brightness
+- List installed application
+- Open an application
+
+```
+
+
+## Dataset Format
+Dataset contains 9500 records, each represents a data sample in JSON format. Each record is distinguished for training 
+and evaluation (90/10 split) purposes using metadata field assigned to ```train``` and ```eval```, respectively. 
+
+Record's fields:
+- ```metadata:``` A flag to determine the sample type assigned among training and evaluation datasets.
+- ```tools:``` Contains a list of available tools (functions) schema that the model literally is able to call and made of the following elements:
+  - ```function:``` An object corresponding to a function:
+    - ```name:``` name of the function.
+    - ```description:``` A description to the function.
+    - ```parameters:``` An object to represent the function's parameters:
+      - ```type:``` It's usually OBJECT: Used to encapsulate complex, structured data.
+      - ```properties:``` A details on the parameters:
+        - ```type:``` Type of the parameter, usually among ```[STRING, NUMBER/INTEGER, BOOLEAN, ARRAY, DATE/TIME]```.
+        - ```description:``` A description to the parameter.
+      - ```required:``` A list of required properties. 
+
+- ```messages:``` A list of messages contain of different roles. Each message contains:
+  - ```role:``` The role among ```[developer, user, assistant]```. The ```user``` role encapsulate the user prompt and ```assistant``` is used for function call by the model.
+  - ```content:``` It's used for the ```developer``` and ```user``` role and indicates the content of the developer and user's message, respectively.
+  - ```tool_calls:``` It's used for the ```assistant``` role and determines the functions to be called.
+    - ```function:``` An object representing a function to be called:
+      - ```name:``` The name of the function. It should be among the tools' function name
+      - ```arguments:``` A list of the parameters to pass over the function.
+

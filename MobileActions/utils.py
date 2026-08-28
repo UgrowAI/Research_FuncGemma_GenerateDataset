@@ -8,7 +8,7 @@ import json
 
 
 
-def UploadDataset2HuggingFace(dataset_dir: str, env_path, readme_path:str, commit_message:str = ""):
+def UploadDataset2HuggingFace(dataset_dir: str, repo_id, env_path, readme_path:str, commit_message:str = ""):
 
     dotenv.load_dotenv(dotenv_path= env_path)
 
@@ -20,7 +20,7 @@ def UploadDataset2HuggingFace(dataset_dir: str, env_path, readme_path:str, commi
     # load dataset
     dataset = load_from_disk(dataset_dir)
     # dataset = load_from_disk(dataset_dir)
-    dataset = dataset.remove_columns('Unnamed: 0')
+    # dataset = dataset.remove_columns('Unnamed: 0')
     print(f"dataset: {dataset}")
 
     # check the dataset
@@ -52,7 +52,7 @@ def UploadDataset2HuggingFace(dataset_dir: str, env_path, readme_path:str, commi
     # dataset.from_pandas(df)
 
 
-    repo_id = "AliRGHZ/Mobile-Action"
+
     dataset.push_to_hub(repo_id)
 
     # from huggingface_hub import DatasetCard, DatasetCardData
@@ -75,18 +75,3 @@ def UploadDataset2HuggingFace(dataset_dir: str, env_path, readme_path:str, commi
     )
 
     print("Dataset pushed successfully to the HuggingFace repository.")
-
-
-
-
-if __name__ == "__main__":
-    PROJECT_DIR = Path(".").absolute()
-
-    env_path = PROJECT_DIR / ".env"
-
-    readme_path = PROJECT_DIR / "MobileActions" / "README.md"
-
-    dataset_dir = "MobileActions/New_Generated/Ali/mobile-actions"
-
-    commit_message = "adjusted dataset.jsonl"
-    UploadDataset2HuggingFace(dataset_dir, env_path, str(readme_path), commit_message)

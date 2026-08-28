@@ -17,16 +17,16 @@ def acceptable_format(complete_dataset_path:str, write_directory:str):
     """Convert DataFrame to Hugging Face Dataset"""
 
     convert = True
-    if (any(Path(write_directory).iterdir())):
-        while True:
-            user = input("Destination directory is not empty. Do you want to clean and generate new .arrow file it? Yes/N")
-            if(user == "Yes"):
-                for file in Path(write_directory).iterdir():
-                    os.remove(file)
-                break
-            elif(user == "N"):
-                convert = False
-                break
+    # if (any(Path(write_directory).iterdir())):
+    #     while True:
+    #         user = input("Destination directory is not empty. Do you want to clean and generate new .arrow file it? Yes/N")
+    #         if(user == "Yes"):
+    #             for file in Path(write_directory).iterdir():
+    #                 os.remove(file)
+    #             break
+    #         elif(user == "N"):
+    #             convert = False
+    #             break
 
     if(convert):
         # load complete dataset

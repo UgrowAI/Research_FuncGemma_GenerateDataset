@@ -4,6 +4,7 @@ name: Mobile Action
 tags:
 - function-calling
 - mobile-actions
+- google
 - functiongemma
 formats:
 - json
@@ -12,32 +13,11 @@ Languages:
 ---
 
 ## Mobile Action
-Mobile Actions is the dataset designed to fine-tune function calling models such as FunctionGemma 270M over mobile functionalities.
-The dataset contains conversational traces over current 15 Android OS system capabilities.
-Fine-tuned model is able to execute on-device's functions with the following provided tools:
-```list
-- Turning the flashlight on
-- Turning the flashlight off
-- Send email
-- Check battery status
-- Check bluetooth status
-- Make a phone call
-- Send sms message
-- Take a picture,
-- Take a screenshot
-- Get current_brightness
-- Decrease brightness
-- Increase brightness
-- Set brightness
-- List installed application
-- Open an application
-
-```
+This dataset is meade by concatenating these two mobile-actions datasets: [Extended Mobile Actions](https://huggingface.co/datasets/AliRGHZ/Mobile-Action)
+and [Google Mobile Actions](https://huggingface.co/datasets/google/mobile-actions).
 
 
 ## Dataset Format
-Dataset contains 9500 records, each represents a data sample in JSON format. Each record is distinguished for training 
-and evaluation (90/10 split) purposes using metadata field assigned to ```train``` and ```eval```, respectively. 
 
 Record's fields:
 - ```metadata:``` A flag to determine the sample type assigned among training and evaluation datasets.
